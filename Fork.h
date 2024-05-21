@@ -5,6 +5,7 @@
 #include <exception>
 #include <iostream>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <type_traits>
 #include <unistd.h>
@@ -47,18 +48,20 @@ namespace Fork {
             protected:
             pid_t pid = -1;
 
+            void fork_() {
+                pid = fork(); 
+                if(pid == -1) {
+                    throw fork_exception(); 
+                }
+            }
 
             public: 
             template <typename ReturnType1, typename... Args1, typename ReturnType2, typename... Args2>
             ReturnType1 Invoke(FunctionWrapper<ReturnType1, Args1...> main, FunctionWrapper<ReturnType2, Args2...> child) {
-                pid = fork(); 
-                if (pid == -1)
-                    throw Internal::fork_exception("fork() failed."); 
+                fork_(); 
 
                 std::any res;
-                if (pid == -1) {
-                    std::cerr << "Fork error" << std::endl;
-                } else if (pid == 0) {
+                if (pid == 0) {
                     child();
                     exit(1);
                 } else {
@@ -116,9 +119,7 @@ namespace Fork {
                 throw Internal::pipe_exception("pipe() failed.");
             }
             
-            pid = fork(); 
-            if (pid == -1)
-                throw Internal::fork_exception("fork() failed."); 
+            fork_(); 
 
             if(pid == 0) {
                 close(fd[0]);
@@ -149,11 +150,18 @@ namespace Fork {
             return *this;
         }
 
-        std::string GetPipeResult() {
+        std::string PipeResult() {
             const auto data = pipe_result;
             pipe_result.clear();
             return data; 
+        }
 
+        template<typename Ret_>
+        Ret_ PipeResultTo() {
+            std::istringstream ss(pipe_result); 
+            Ret_ result; 
+            ss >> result; 
+            return result; 
         }
 
     }; 

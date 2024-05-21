@@ -22,8 +22,17 @@ private:
     }
 
 public:
-    FunctionWrapper(std::function<ReturnType(Args...)> fp, Args &&...a) : args(a...), fp(fp) {}
+    FunctionWrapper(std::function<ReturnType(Args...)> fp) : fp(fp) {}
+
+    FunctionWrapper<ReturnType, Args...>& BindArgs(Args &&... a) {
+        args = {a...}; 
+        return *this;
+    }
     
+    std::tuple<Args...> GetArgs() {
+        return args;
+    }
+
     ReturnType Invoke() {
         if constexpr (std::is_same_v<void, ReturnType>) {
             callFunc(std::index_sequence_for<Args...>());
