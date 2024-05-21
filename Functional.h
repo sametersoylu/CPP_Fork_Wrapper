@@ -4,6 +4,8 @@
 #include <type_traits>
 #include <utility>
 
+class None {}; 
+
 template <typename ReturnType, typename... Args> class FunctionWrapper {
 private:
     std::function<ReturnType(Args...)> fp;
@@ -20,7 +22,8 @@ private:
     }
 
 public:
-    FunctionWrapper(ReturnType (*fp)(Args...), Args &&...a) : args(a...), fp(fp) {}
+    FunctionWrapper(std::function<ReturnType(Args...)> fp, Args &&...a) : args(a...), fp(fp) {}
+    
     ReturnType Invoke() {
         if constexpr (std::is_same_v<void, ReturnType>) {
             callFunc(std::index_sequence_for<Args...>());
