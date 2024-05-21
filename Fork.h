@@ -57,7 +57,7 @@ namespace Fork {
 
             public: 
             template <typename ReturnType1, typename... Args1, typename ReturnType2, typename... Args2>
-            ReturnType1 Invoke(FunctionWrapper<ReturnType1, Args1...> main, FunctionWrapper<ReturnType2, Args2...> child) {
+            ReturnType1 Invoke(Functional::BoundArgFunction<ReturnType1, Args1...> main, Functional::BoundArgFunction<ReturnType2, Args2...> child) {
                 fork_(); 
 
                 std::any res;
@@ -76,7 +76,7 @@ namespace Fork {
             }
 
             template<typename ReturnType, typename... Args>
-            void Invoke(FunctionWrapper<ReturnType, Args...> child) {
+            void Invoke(Functional::BoundArgFunction<ReturnType, Args...> child) {
                 pid = fork();
                 if (pid == -1) {
                     std::cerr << "Fork error" << std::endl;
@@ -93,13 +93,13 @@ namespace Fork {
         Fork() {}
         
         template <typename ReturnType1, typename... Args1, typename ReturnType2, typename... Args2>
-        ReturnType1 operator()(FunctionWrapper<ReturnType1, Args1...> main, FunctionWrapper<ReturnType2, Args2...> child) {
+        ReturnType1 operator()(Functional::BoundArgFunction<ReturnType1, Args1...> main, Functional::BoundArgFunction<ReturnType2, Args2...> child) {
             if constexpr (std::is_same_v<ReturnType1, void>) return; 
             return Internal::base_fork::Invoke(main, child);
         }
 
         template<typename ReturnType, typename... Args>
-        void operator()(FunctionWrapper<ReturnType, Args...> child) {
+        void operator()(Functional::BoundArgFunction<ReturnType, Args...> child) {
             Internal::base_fork::Invoke(child);
         }
     };
@@ -114,7 +114,7 @@ namespace Fork {
         public: 
 
         template<typename ReturnType, typename... Args>
-        PipedFork<buffer_size>& Invoke(FunctionWrapper<ReturnType, Args...> child) {
+        PipedFork<buffer_size>& Invoke(Functional::BoundArgFunction<ReturnType, Args...> child) {
             if(pipe(fd) == -1) {
                 throw Internal::pipe_exception("pipe() failed.");
             }
@@ -145,7 +145,7 @@ namespace Fork {
         }
 
         template<typename ReturnType, typename... Args>
-        PipedFork<buffer_size>& operator()(FunctionWrapper<ReturnType, Args...> child) {
+        PipedFork<buffer_size>& operator()(Functional::BoundArgFunction<ReturnType, Args...> child) {
             PipedFork::Invoke(child);
             return *this;
         }
